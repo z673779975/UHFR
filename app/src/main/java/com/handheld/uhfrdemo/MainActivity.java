@@ -23,9 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.handheld.uhfr.R;
-import com.handheld.uhfr.RrReader;
 import com.handheld.uhfr.UHFRManager;
-import com.uhf.api.cls.Reader;
 
 
 public class MainActivity extends FragmentActivity implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {

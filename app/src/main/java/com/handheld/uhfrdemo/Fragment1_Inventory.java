@@ -28,8 +28,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.gg.reader.api.protocol.gx.LogBase6bInfo;
-import com.gg.reader.api.protocol.gx.LogBaseGJbInfo;
 import com.handheld.uhfr.R;
 import com.handheld.uhfr.UHFRManager;
 import com.uhf.api.cls.Reader;
@@ -323,7 +321,7 @@ public class Fragment1_Inventory extends Fragment implements OnCheckedChangeList
                     list1 = MainActivity.mUhfrManager.tagEpcOtherInventoryByTimer((short) 50,2,0,12,Tools.HexString2Bytes("00000000"));
                 } else {
 //                    list1 = MainActivity.mUhfrManager.tagInventoryByTimer((short) 50);
-                    MainActivity.mUhfrManager.getYilianTagTemperature();
+//                    MainActivity.mUhfrManager.getYilianTagTemperature();
                 }
             }
             String data;
