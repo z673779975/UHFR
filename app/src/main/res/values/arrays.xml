@@ -4,9 +4,7 @@
         <item>RG_PRC</item>
         <item>RG_NA</item>
         <item>RG_NONE</item>
-        <item>RG_KR</item>
-        <item>RG_EU</item>
-        <item>RG_EU2</item>
+        <item>RG_JP</item>
         <item>RG_EU3</item>
     </string-array>
     <string-array name="read_power">

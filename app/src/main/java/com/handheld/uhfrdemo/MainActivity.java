@@ -283,4 +283,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         mToast.show();
     }
 
+    public void closeA(){
+        finish();
+    }
+
 }

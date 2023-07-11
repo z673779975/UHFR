@@ -3,6 +3,8 @@ package com.handheld.uhfr;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.widget.Toast;
+
 import com.uhf.api.cls.R2000_calibration.TagLED_DATA;
 import com.uhf.api.cls.ReadListener;
 import com.uhf.api.cls.Reader;
@@ -1073,6 +1075,27 @@ public class UHFRManager {
             READER_ERR ret = reader.ParamSet(Mtr_Param.MTR_PARAM_CUSTOM, cpara);
             return ret == READER_ERR.MT_OK_ERR;
         }
+    }
+
+    public READER_ERR setSpecParamsForReader(Region_Conf rre) {
+        Reader.SpecObject sval = reader.new SpecObject(rre);
+        reader.SpecParamsForReader(0, true, sval);
+
+        Reader.SpecObject val = reader.new SpecObject();
+        reader.SpecParamsForReader(0, false, val);
+        if (((Region_Conf) val.Val()) == rre) {
+            sval.Val();
+            return READER_ERR.MT_OK_ERR;
+        } else {
+            return READER_ERR.MT_CMD_FAILED_ERR;
+        }
+
+    }
+
+    public Region_Conf getSpecParamsForReader() {
+        Reader.SpecObject val = reader.new SpecObject();
+        reader.SpecParamsForReader(0, false, val);
+        return (Region_Conf) val.Val();
     }
 
 }

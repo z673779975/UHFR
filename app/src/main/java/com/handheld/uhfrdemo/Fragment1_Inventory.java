@@ -591,7 +591,7 @@ public class Fragment1_Inventory extends Fragment implements OnCheckedChangeList
                     save(FileName());
                     Toast.makeText(getContext(), "Success" + listEpc.size(), Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(getContext(), "Fila", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Fail", Toast.LENGTH_SHORT).show();
                 }
                 break;
 
