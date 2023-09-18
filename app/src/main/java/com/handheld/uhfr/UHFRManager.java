@@ -823,9 +823,11 @@ public class UHFRManager {
     }
 
     public READER_ERR setRegion(Region_Conf region) {
-
-        return reader.ParamSet(Mtr_Param.MTR_PARAM_FREQUENCY_REGION, region);
-
+        READER_ERR readerErr = reader.ParamSet(Mtr_Param.MTR_PARAM_FREQUENCY_REGION, region);
+        if(readerErr!=READER_ERR.MT_OK_ERR){
+            readerErr = setSpecParamsForReader(region);
+        }
+        return readerErr;
     }
 
     public Region_Conf getRegion() {
