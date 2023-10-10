@@ -134,4 +134,7 @@
     <string name="timeout">StopTime(ms): </string>
     <string name="def_timeout">10000</string>
 
+    <string name="store">store</string>
+    <string name="export_excel_need_permission">Permissions required for exporting Excel</string>
+
 </resources>

@@ -1,5 +1,6 @@
 package com.handheld.uhfrdemo;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -50,6 +51,9 @@ import jxl.write.Label;
 import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
 import jxl.write.WriteException;
+import me.weyye.hipermission.HiPermission;
+import me.weyye.hipermission.PermissionCallback;
+import me.weyye.hipermission.PermissionItem;
 
 import static com.handheld.uhfrdemo.Util.context;
 
@@ -278,7 +282,7 @@ public class Fragment1_Inventory extends Fragment implements OnCheckedChangeList
     public void onHiddenChanged(boolean hidden) {
         super.onHiddenChanged(hidden);
         f1hidden = hidden;
-		Log.i("hidden", "hide"+hidden);
+        Log.i("hidden", "hide" + hidden);
         if (isStart) {
             isStart = false;
             if (isMulti) {
@@ -318,10 +322,9 @@ public class Fragment1_Inventory extends Fragment implements OnCheckedChangeList
                 list1 = MainActivity.mUhfrManager.tagInventoryRealTime();
             } else {
                 if (isTid) {
-                    list1 = MainActivity.mUhfrManager.tagEpcOtherInventoryByTimer((short) 50,2,0,12,Tools.HexString2Bytes("00000000"));
+                    list1 = MainActivity.mUhfrManager.tagEpcOtherInventoryByTimer((short) 50, 2, 0, 12, Tools.HexString2Bytes("00000000"));
                 } else {
-//                    list1 = MainActivity.mUhfrManager.tagInventoryByTimer((short) 50);
-//                    MainActivity.mUhfrManager.getYilianTagTemperature();
+                    list1 = MainActivity.mUhfrManager.tagInventoryByTimer((short) 50);
                 }
             }
             String data;
@@ -382,6 +385,7 @@ public class Fragment1_Inventory extends Fragment implements OnCheckedChangeList
                     list1 = MainActivity.mUhfrManager.tagEpcTidInventoryByTimer((short) 50);
                 } else {
                     list1 = MainActivity.mUhfrManager.tagInventoryByTimer((short) 50);
+                    Log.e("zeng-size:","list1.size():"+list1.size());
                 }
             }
             String data;
@@ -439,7 +443,6 @@ public class Fragment1_Inventory extends Fragment implements OnCheckedChangeList
             return;
         }
 
-        //MainActivity.mUhfrManager.setEMBEDEDATA(3,0,2, Tools.HexString2Bytes("00000000"));
         if (!isStart) {
             // Clear err info
             tvErr.setText("");
@@ -453,14 +456,14 @@ public class Fragment1_Inventory extends Fragment implements OnCheckedChangeList
             btnStart.setText(this.getString(R.string.stop_inventory_epc));
             if (isSession1) {
 //                MainActivity.mUhfrManager.setGen2session(1);
-                        MainActivity.mUhfrManager.setInventoryFilter(Tools.HexString2Bytes("1169"), 1, 2, true);
-                        MainActivity.mUhfrManager.setInventoryFilter(Tools.HexString2Bytes("0000"), 1, 2, true);
+                MainActivity.mUhfrManager.setInventoryFilter(Tools.HexString2Bytes("1169"), 1, 2, true);
+                MainActivity.mUhfrManager.setInventoryFilter(Tools.HexString2Bytes("0000"), 1, 2, true);
             } else {
                 MainActivity.mUhfrManager.setGen2session(isMulti);
             }
             if (isSession1) {
                 MainActivity.mUhfrManager.asyncStartReading(16);
-            }else if (isMulti) {
+            } else if (isMulti) {
                 Log.i(TGA, "isMulti-true");
                 MainActivity.mUhfrManager.asyncStartReading();
             }
@@ -510,7 +513,7 @@ public class Fragment1_Inventory extends Fragment implements OnCheckedChangeList
             }
             if (isSession1) {
                 MainActivity.mUhfrManager.asyncStartReading(16);
-            }else if (isMulti) {
+            } else if (isMulti) {
                 Log.i(TGA, "isMulti-true");
                 MainActivity.mUhfrManager.asyncStartReading();
             }
@@ -587,12 +590,41 @@ public class Fragment1_Inventory extends Fragment implements OnCheckedChangeList
                 clearEpc();
                 break;
             case R.id.button_export:
-                if (listEpc != null && listEpc.size() != 0) {
-                    save(FileName());
-                    Toast.makeText(getContext(), "Success" + listEpc.size(), Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(getContext(), "Fail", Toast.LENGTH_SHORT).show();
-                }
+//                List<PermissionItem> permissonItems = new ArrayList<PermissionItem>();
+
+                List<PermissionItem> permissonItems = new ArrayList<PermissionItem>();
+                permissonItems.add(new PermissionItem(Manifest.permission.WRITE_EXTERNAL_STORAGE, getActivity().getResources().getString(R.string.store), me.weyye.hipermission.R.drawable.permission_ic_storage));
+                HiPermission.create(getActivity())
+                        .title(getActivity().getResources().getString(R.string.export_excel_need_permission))
+                        .permissions(permissonItems)
+                        .checkMutiPermission(new PermissionCallback() {
+                            @Override
+                            public void onClose() {
+                                Log.e("onClose", "onClose");
+                            }
+
+                            @Override
+                            public void onFinish() {
+                                if (listEpc != null && listEpc.size() != 0) {
+                                    save(FileName());
+                                    Toast.makeText(getContext(), "Success" + listEpc.size(), Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(getContext(), "Fail", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+
+                            @Override
+                            public void onDeny(String permission, int position) {
+                                Log.e("onDeny", "onDeny");
+                            }
+
+                            @Override
+                            public void onGuarantee(String permission, int position) {
+                                Log.e("onGuarantee", "onGuarantee");
+                            }
+                        });
+
+
                 break;
 
             case R.id.button_time_start:
@@ -630,7 +662,7 @@ public class Fragment1_Inventory extends Fragment implements OnCheckedChangeList
 //        MainActivity.mUhfrManager.write6bTid(0, "E0040000B25A1D09") ;
 //        int qvalue = MainActivity.mUhfrManager.getQvalue() ;
 //        List<LogBase6bInfo> list = MainActivity.mUhfrManager.inventory6BTag((short) 20);
-        boolean testpang = true ;
+        boolean testpang = true;
         if (testpang) {
 
 //            List<LogBaseGJbInfo> list = MainActivity.mUhfrManager.inventoryGJBTag(true, (short) 20);
@@ -650,7 +682,7 @@ public class Fragment1_Inventory extends Fragment implements OnCheckedChangeList
 //                if (readData != null) {
 //                    Log.e("pang", "read data  : " + Tools.Bytes2HexString(readData, readData.length));
 //                }
-                //000000000000000000000000000000000000000000000000000000000000000000000000
+            //000000000000000000000000000000000000000000000000000000000000000000000000
 //                byte[] epc = Tools.HexString2Bytes("1234000000000000");
 //                //写入
 //                boolean wflag = MainActivity.mUhfrManager.writeGJB(4,
@@ -661,7 +693,7 @@ public class Fragment1_Inventory extends Fragment implements OnCheckedChangeList
 //                        Tools.HexString2Bytes("5678"),
 //                        null);
 //                Log.e("pang", "writeFlag = "+ wflag);
-                //锁定 tid : A0020706054D016000000000 //000000000000000000000000000000000000000000000000000000000000000000000000
+            //锁定 tid : A0020706054D016000000000 //000000000000000000000000000000000000000000000000000000000000000000000000
 
 //                boolean lockFlag = MainActivity.mUhfrManager.lockGJB(2,
 //                        0,

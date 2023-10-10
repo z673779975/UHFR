@@ -47,6 +47,7 @@ dependencies {
     implementation fileTree(include: ['*.aar'], dir: 'libs')
     implementation files('libs\\ModuleAPI_J.jar')
     implementation files('libs\\jxl.jar')
+    implementation 'me.weyye.hipermission:library:1.0.7'
     customConfig fileTree(include: ['*.aar'], dir: 'libs')
     tempConfig fileTree(dest_dir)
 }

@@ -136,4 +136,6 @@
     <string name="timeout">停止时间(ms)：</string>
     <string name="def_timeout">10000</string>
 
+    <string name="store">存储</string>
+    <string name="export_excel_need_permission">导出excel所需权限</string>
 </resources>
