@@ -4,8 +4,6 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.LogPrinter;
-
-import com.apkfuns.logutils.LogUtils;
 import com.gg.reader.api.dal.GClient;
 import com.gg.reader.api.dal.HandlerTag6bLog;
 import com.gg.reader.api.dal.HandlerTag6bOver;
@@ -55,9 +53,6 @@ import com.gg.reader.api.protocol.gx.ParamEpcReadUserdata;
 import com.gg.reader.api.protocol.gx.ParamFastId;
 import com.gg.reader.api.protocol.gx.ParamGbReadUserdata;
 import com.gg.reader.api.utils.HexUtils;
-import com.rfid.trans.ReadTag;
-import com.rfid.trans.ReaderHelp;
-import com.rfid.trans.TagCallback;
 import com.uhf.api.cls.BackReadOption;
 import com.uhf.api.cls.R2000_calibration.TagLED_DATA;
 import com.uhf.api.cls.ReadListener;
@@ -108,10 +103,6 @@ public class UHFRManager {
     private static List<LogBaseGJbInfo> gjbepcList = new ArrayList<>();
 
     private static List<LogBase6bInfo> tag6bList = new ArrayList<>();
-
-    private static final List<ReadTag> rrTagList = new ArrayList<>();
-    public static final Object waitLock = new Object();
-    private static final MsgCallback callback = new MsgCallback();
     //6106
     private static SerialPort sSerialPort;
     private static final String tag = "UHFRManager";
@@ -203,16 +194,6 @@ public class UHFRManager {
             //锐迪，未完成
             logPrint("zeng-", "type2-close");
             driver.Close_Com();
-        } else if (type == 3) {
-            int disconnectResult = RrReader.rrlib.DisConnect();
-            if (disconnectResult == 0) {
-                new SerialPort().power_5Voff();
-                uhfrManager = null;
-                logPrint("Close power of rr reader");
-                return true;
-            } else {
-                logPrint("Rr close error: " + disconnectResult);
-            }
         }
         new SerialPort().power_5Voff();
         uhfrManager = null;
@@ -256,9 +237,6 @@ public class UHFRManager {
             //锐迪，未完成
             version = "1.1.03";
             return version;
-        } else if (type == 3) {
-            String str = RrReader.getVersion();
-            version = String.format("1.1.04.%s", str);
         }
         return version;
     }
@@ -433,14 +411,6 @@ public class UHFRManager {
                     return true;
                 }
             } else {
-            }
-        } else if (type == 3) {
-            int result = RrReader.connect("/dev/ttyMT1", 115200, DEBUG ? 1 : 0);
-            if (result == 0) {
-                RrReader.rrlib.SetCallBack(callback);
-                return true;
-            } else {
-                logPrint("Rr connect error: " + result);
             }
         }
         new SerialPort().power_5Voff();
@@ -635,16 +605,6 @@ public class UHFRManager {
 
                 return READER_ERR.MT_OK_ERR;
             }
-        } else if (type == 3) {
-            synchronized (rrTagList) {
-                rrTagList.clear();
-            }
-            int startReadResult = RrReader.startRead();
-            if (startReadResult == 0) {
-                return READER_ERR.MT_OK_ERR;
-            } else {
-                logPrint("Rr async start reading error:" + startReadResult);
-            }
         }
         return READER_ERR.MT_CMD_FAILED_ERR;
     }
@@ -717,8 +677,6 @@ public class UHFRManager {
 
                 return READER_ERR.MT_OK_ERR;
             }
-        } else if (type == 3) {
-            return asyncStartReading();
         }
         return READER_ERR.MT_CMD_FAILED_ERR;
     }
@@ -749,9 +707,6 @@ public class UHFRManager {
             //锐迪，未完成
             driver.stopRead();
             logPrint("zeng-", "cont:" + count);
-            return READER_ERR.MT_OK_ERR;
-        } else if (type == 3) {
-            RrReader.stopRead();
             return READER_ERR.MT_OK_ERR;
         }
         return READER_ERR.MT_CMD_FAILED_ERR;
@@ -804,9 +759,6 @@ public class UHFRManager {
             return true;
 
 
-        } else if (type == 3) {
-//            RrReader.setInvMask(fdata, fbank, fstartaddr, matching);
-            return true;
         }
         return false;
     }
@@ -843,9 +795,6 @@ public class UHFRManager {
             return true;
 
 
-        } else if (type == 3) {
-            RrReader.setInvMask(fdata, fbank, fstartaddr, matching);
-            return true;
         }
         return false;
     }
@@ -865,9 +814,6 @@ public class UHFRManager {
             return true;
         } else if (type == 2) {
 //锐迪未完成//
-            return true;
-        } else if (type == 3) {
-            RrReader.rrlib.ClearMaskList();
             return true;
         }
         return false;
@@ -1272,8 +1218,6 @@ public class UHFRManager {
 //                }
 //            }
             //锐迪，未完成
-        } else if (type == 3) {
-            return formatRrTagList();
         }
         return list;
     }
@@ -1329,9 +1273,6 @@ public class UHFRManager {
 //            logPrint("zeng-","cont:"+count);
             READER_ERR reader_err = asyncStopReading();
             return reader_err.value() == 0;
-        } else if (type == 3) {
-            RrReader.rrlib.StopRead();
-            return true;
         }
         return false;
     }
@@ -1412,16 +1353,6 @@ public class UHFRManager {
             }
             return list;
 
-        } else if (type == 3) {
-            synchronized (rrTagList) {
-                rrTagList.clear();
-            }
-            int scanRfidResult = RrReader.scanRfid(0, 1, 0, 0, "00000000", readtime);
-            if (scanRfidResult == 0) {
-                return formatRrTagList();
-            } else {
-                logPrint("Rr inventory tag by timer error: " + scanRfidResult);
-            }
         }
         return null;
     }
@@ -1883,16 +1814,6 @@ public class UHFRManager {
         } else if (type == 2) {
 //锐迪未完成//
             return null;
-        } else if (type == 3) {
-            synchronized (rrTagList) {
-                rrTagList.clear();
-            }
-            int scanRfidResult = RrReader.scanRfid(1, 2, 0, 6, "00000000", readtime);
-            if (scanRfidResult == 0) {
-                return formatRrTagList();
-            } else {
-                logPrint("Rr inventory tag & tid by timer error: " + scanRfidResult);
-            }
         }
         return null;
     }
@@ -1973,16 +1894,6 @@ public class UHFRManager {
         } else if (type == 2) {
 //锐迪未完成//
             return null;
-        } else if (type == 3) {
-            synchronized (rrTagList) {
-                rrTagList.clear();
-            }
-            int scanRfidResult = RrReader.scanRfid(1, bank, startaddr, bytecnt / 2, Tools.Bytes2HexString(accesspwd, accesspwd.length), readtime);
-            if (scanRfidResult == 0) {
-                return formatRrTagList();
-            } else {
-                logPrint("Rr inventory tag & other by timer error: " + scanRfidResult);
-            }
         }
         return null;
     }
@@ -2111,15 +2022,6 @@ public class UHFRManager {
             } else {
                 return READER_ERR.MT_CMD_FAILED_ERR;
             }
-        } else if (type == 3) {
-//            RrReader.rrlib.ClearMaskList();
-            int readDataG2Result = RrReader.readG2Data(mbank, startaddr, len, password, timeout, new byte[0], 1, 0, true, rdata);
-//            int readDataG2Result = RrReader.rrlib.ReadData_G2((byte) 0, new byte[0], (byte) mbank, startaddr, (byte) len, password, rdata, new byte[1]);
-            if (readDataG2Result == 0) {
-                return READER_ERR.MT_OK_ERR;
-            } else {
-                logPrint("Rr get Tag data g2 error: " + readDataG2Result);
-            }
         }
         return READER_ERR.MT_CMD_FAILED_ERR;
     }
@@ -2231,14 +2133,6 @@ public class UHFRManager {
             } else {
                 return null;
             }
-        } else if (type == 3) {
-            byte[] rdata = new byte[len * 2];
-            int readDataG2Result = RrReader.readG2Data(mbank, startaddr, len, password, timeout, fdata, fbank, fstartaddr, matching, rdata);
-            if (readDataG2Result == 0) {
-                return rdata;
-            } else {
-                logPrint("Rr get tag data g2 by filter error: " + readDataG2Result);
-            }
         }
         return null;
     }
@@ -2300,15 +2194,6 @@ public class UHFRManager {
                     Tools.Bytes2HexString(data, data.length).length() / 4,
                     Tools.Bytes2HexString(data, data.length));
             return Status == 0 ? READER_ERR.MT_OK_ERR : READER_ERR.MT_CMD_FAILED_ERR;
-        } else if (type == 3) {
-//            RrReader.rrlib.ClearMaskList();
-            int writeDataG2Result = RrReader.writeG2Data(mbank, startaddress, data, datalen, accesspasswd, timeout, new byte[0], 1, 0, true);
-//            int writeDataG2Result = RrReader.rrlib.WriteData_G2((byte) (datalen * 2), (byte) 0, new byte[0], (byte) mbank, startaddress, data, accesspasswd, new byte[1]);
-            if (writeDataG2Result == 0) {
-                return READER_ERR.MT_OK_ERR;
-            } else {
-                logPrint("Write tag data g2 error: " + writeDataG2Result);
-            }
         }
         return READER_ERR.MT_CMD_FAILED_ERR;
     }
@@ -2390,13 +2275,6 @@ public class UHFRManager {
                     Tools.Bytes2HexString(data, data.length).length() / 4,
                     Tools.Bytes2HexString(data, data.length));
             return Status == 0 ? READER_ERR.MT_OK_ERR : READER_ERR.MT_CMD_FAILED_ERR;
-        } else if (type == 3) {
-            int writeG2DataByFilterResult = RrReader.writeG2Data(mbank, startaddress, data, datalen, accesspasswd, timeout, fdata, fbank, fstartaddr, matching);
-            if (writeG2DataByFilterResult == 0) {
-                return READER_ERR.MT_OK_ERR;
-            } else {
-                logPrint("Write tag data g2 by filter error: " + writeG2DataByFilterResult);
-            }
         }
         return READER_ERR.MT_CMD_FAILED_ERR;
     }
@@ -2436,13 +2314,6 @@ public class UHFRManager {
             return READER_ERR.MT_CMD_FAILED_ERR;
 
 
-        } else if (type == 3) {
-            int writeTagEpcResult = RrReader.writeTagEpc(data, accesspwd, timeout, new byte[0], 1, 0, true);
-            if (writeTagEpcResult == 0) {
-                return READER_ERR.MT_OK_ERR;
-            } else {
-                logPrint("Write tag EPC error: " + writeTagEpcResult);
-            }
         }
         return READER_ERR.MT_CMD_FAILED_ERR;
     }
@@ -2507,13 +2378,6 @@ public class UHFRManager {
             //锐迪未完成//
 
             return READER_ERR.MT_CMD_FAILED_ERR;
-        } else if (type == 3) {
-            int writeTagEpcResult = RrReader.writeTagEpc(data, accesspwd, timeout, fdata, fbank, fstartaddr, matching);
-            if (writeTagEpcResult == 0) {
-                return READER_ERR.MT_OK_ERR;
-            } else {
-                logPrint("Write tag EPC by filter error: " + writeTagEpcResult);
-            }
         }
         return READER_ERR.MT_CMD_FAILED_ERR;
     }
@@ -2578,13 +2442,6 @@ public class UHFRManager {
             Status = driver.Lock_Tag_Data(Tools.Bytes2HexString(accesspasswd, accesspasswd.length), 0, 0, 0, "", lockobject.value(), locktype.value());
             return Status == 0 ? READER_ERR.MT_OK_ERR : READER_ERR.MT_CMD_FAILED_ERR;
 
-        } else if (type == 3) {
-            int lockTagResult = RrReader.lockTag(lockobject, locktype, accesspasswd, timeout, new byte[0], 1, 0, true);
-            if (lockTagResult == 0) {
-                return READER_ERR.MT_OK_ERR;
-            } else {
-                logPrint("Rr lock tag error: " + lockTagResult);
-            }
         }
         return READER_ERR.MT_CMD_FAILED_ERR;
     }
@@ -2679,13 +2536,6 @@ public class UHFRManager {
             return Status == 0 ? READER_ERR.MT_OK_ERR : READER_ERR.MT_CMD_FAILED_ERR;
 
 
-        } else if (type == 3) {
-            int lockTagResult = RrReader.lockTag(lockobject, locktype, accesspasswd, timeout, fdata, fbank, fstartaddr, true);
-            if (lockTagResult == 0) {
-                return READER_ERR.MT_OK_ERR;
-            } else {
-                logPrint("Rr lock tag by filter error: " + lockTagResult);
-            }
         }
         return READER_ERR.MT_CMD_FAILED_ERR;
     }
@@ -2724,13 +2574,6 @@ public class UHFRManager {
 
             return status == 0 ? READER_ERR.MT_OK_ERR : READER_ERR.MT_CMD_FAILED_ERR;
 
-        } else if (type == 3) {
-            int killG2Result = RrReader.killTag(killpasswd, timeout, new byte[0], 1, 0, true);
-            if (killG2Result == 0) {
-                return READER_ERR.MT_OK_ERR;
-            } else {
-                logPrint("Rr kill g2 error: " + killG2Result);
-            }
         }
         return READER_ERR.MT_CMD_FAILED_ERR;
     }
@@ -2797,15 +2640,6 @@ public class UHFRManager {
             int status = driver.Kill_Tag(Tools.Bytes2HexString(killpasswd, killpasswd.length), fbank, fstartaddr, (sData.length() / 4), sData);
 
             return status == 0 ? READER_ERR.MT_OK_ERR : READER_ERR.MT_CMD_FAILED_ERR;
-
-
-        } else if (type == 3) {
-            int killG2Result = RrReader.killTag(killpasswd, timeout, fdata, fbank, fstartaddr, matching);
-            if (killG2Result == 0) {
-                return READER_ERR.MT_OK_ERR;
-            } else {
-                logPrint("Rr kill g2 by filter error: " + killG2Result);
-            }
         }
         return READER_ERR.MT_CMD_FAILED_ERR;
     }
@@ -2872,13 +2706,6 @@ public class UHFRManager {
                     return setPower(rPower, wPower);
                 }
             }
-        } else if (type == 3) {
-            int setRegionResult = RrReader.setRegion(region);
-            if (setRegionResult == 0) {
-                return READER_ERR.MT_OK_ERR;
-            } else {
-                logPrint("Rr set region error: " + setRegionResult);
-            }
         }
         return READER_ERR.MT_CMD_FAILED_ERR;
     }
@@ -2934,14 +2761,6 @@ public class UHFRManager {
                     default:
                         return null;
                 }
-            }
-        } else if (type == 3) {
-            byte[] band = new byte[1];
-            int result = RrReader.rrlib.GetReaderInformation(new byte[2], new byte[1], band, new byte[1], new byte[1]);
-            if (result == 0) {
-                return RrReader.RrRegion_Conf.convertToClRegion(band[0]);
-            } else {
-                logPrint("Rr get region error: " + result);
             }
         }
         return null;
@@ -3071,13 +2890,6 @@ public class UHFRManager {
                 return READER_ERR.MT_OK_ERR;
             }
 
-        } else if (type == 3) {
-            int setReadWritePowerResult = RrReader.setReadWritePower(readPower, writePower);
-            if (setReadWritePowerResult == 0) {
-                return READER_ERR.MT_OK_ERR;
-            } else {
-                logPrint("Rr set power error: " + setReadWritePowerResult);
-            }
         }
         return READER_ERR.MT_CMD_FAILED_ERR;
     }
@@ -3129,8 +2941,6 @@ public class UHFRManager {
             } else {
                 return null;
             }
-        } else if (type == 3) {
-            return RrReader.getReadWritePower();
         }
         return null;
     }
@@ -3206,8 +3016,6 @@ public class UHFRManager {
         } else if (type == 2) {
             //锐迪，未完成
             return null;
-        } else if (type == 3) {
-            taginfos = RrReader.measureYueHeTemp();
         }
         return taginfos;
     }
@@ -3239,19 +3047,6 @@ public class UHFRManager {
                 }
             }
 //            return taginfos ;
-        } else if (type == 1 || type == 3) {
-            List<TAGINFO> list = tagEpcOtherInventoryByTimer((short) 50, 3, 127, 2, new byte[4]);
-            if (list != null && !list.isEmpty()) {
-                taginfos = handleYilian(type, list);
-//                Log.e("pang", "list is not null");
-//                for (int i = 0; i < list.size(); i++) {
-//                    TAGINFO tag = list.get(i);
-//                    Log.e("pang", "EPC:" + Tools.Bytes2HexString(tag.EpcId, tag.EpcId.length));
-//                    if (tag.EmbededData != null) {
-//                        Log.e("pang", "EmbededData:" + Tools.Bytes2HexString(tag.EmbededData, tag.EmbededData.length));
-//                    }
-//                }
-            }
         } else if (type == 2) {
 
         }
@@ -3360,12 +3155,6 @@ public class UHFRManager {
                     return true;
                 }
             }
-        } else if (type == 3) {
-            if (isMulti) {
-                return true;
-            } else {
-                return setGen2session(0);
-            }
         }
         return false;
     }
@@ -3419,9 +3208,6 @@ public class UHFRManager {
                     return true;
                 }
             }
-        } else if (type == 3) {
-            RrReader.setSession(session);
-            return true;
         }
         return false;
     }
@@ -3457,8 +3243,6 @@ public class UHFRManager {
                 return tmp;
             }
 
-        } else if (type == 3) {
-            return RrReader.getSession();
         }
         return -1;
     }
@@ -3488,9 +3272,6 @@ public class UHFRManager {
         } else if (type == 2) {
             //锐迪，未完成
 
-        } else if (type == 3) {
-            RrReader.setQ(qvaule);
-            return true;
         }
 
         return flag;
@@ -3516,8 +3297,6 @@ public class UHFRManager {
         } else if (type == 2) {
             //锐迪，未完成
 
-        } else if (type == 3) {
-            return RrReader.getQ();
         }
 
         return value;
@@ -3551,8 +3330,6 @@ public class UHFRManager {
 
             }
 
-        } else if (type == 3) {
-            return RrReader.rrlib.GetInventoryPatameter().Target;
         }
         return target;
     }
@@ -3602,9 +3379,6 @@ public class UHFRManager {
                     return true;
                 }
             }
-        } else if (type == 3) {
-            RrReader.setTarget(target);
-            return true;
         }
 
         return flag;
@@ -3666,35 +3440,8 @@ public class UHFRManager {
             } else {
                 return true;
             }
-        } else if (type == 3) {
-            RrReader.setFastId(isOpenFastTiD);
-            return true;
         }
         return false;
-    }
-
-    /**
-     * 设置荣睿的盘点间隔以及载波持续时间
-     *
-     * @return 0 成功，其他 失败
-     */
-    public int setRrJgDwell(int jgTiem, int dwell) {
-        if (type == 3) {
-            return RrReader.setJgDwell(jgTiem, dwell);
-        } else {
-            return -1;
-        }
-    }
-
-    /**
-     * 获取荣睿的盘点间隔以及载波持续时间
-     */
-    public int[] getRrJgDwell() {
-        if (type == 3) {
-            return RrReader.getJgDwell();
-        } else {
-            return new int[]{-1, -1};
-        }
     }
 
     //国芯的方法
@@ -3832,64 +3579,6 @@ public class UHFRManager {
             }
         }
         return false;
-    }
-
-    private static long lastEnterTime = SystemClock.elapsedRealtime();
-
-    public static class MsgCallback implements TagCallback {
-
-        @Override
-        public void tagCallback(ReadTag arg0) {
-            synchronized (rrTagList) {
-                rrTagList.add(arg0);
-            }
-        }
-
-        @Override
-        public void StopReadCallBack() {
-            logPrint("Rr stop read callback");
-        }
-    }
-
-    private List<Reader.TAGINFO> formatRrTagList() {
-        synchronized (rrTagList) {
-            HashMap<String, TAGINFO> tagMap = new HashMap<>();
-            for (ReadTag info : rrTagList) {
-                TAGINFO taginfo = new Reader().new TAGINFO();
-                taginfo.AntennaID = (byte) info.antId;
-                byte[] epcIdBytes = Tools.HexString2Bytes(info.epcId);
-                taginfo.EpcId = epcIdBytes;
-                taginfo.Epclen = (short) epcIdBytes.length;
-                if (info.memId != null && info.memId.length() > 0) {
-                    int ivtType = RrReader.rrlib.GetInventoryPatameter().IvtType;
-                    if (ivtType == 2) {
-                        byte[] fastIdBytes = Tools.HexString2Bytes(info.epcId + info.memId);
-                        taginfo.EpcId = fastIdBytes;
-                        taginfo.Epclen = (short) fastIdBytes.length;
-                    } else {
-                        byte[] embededDataBytes = Tools.HexString2Bytes(info.memId);
-                        taginfo.EmbededData = embededDataBytes;
-                        taginfo.EmbededDatalen = (short) embededDataBytes.length;
-                    }
-                }
-                taginfo.protocol = SL_TagProtocol.SL_TAG_PROTOCOL_GEN2;
-                taginfo.Phase = info.phase;
-                double v = -130 + info.rssi;
-                taginfo.RSSI = (int) Math.round(v);
-                if (!tagMap.containsKey(info.epcId)) {
-                    taginfo.ReadCnt = 1;
-                    tagMap.put(info.epcId, taginfo);
-                } else {
-                    TAGINFO temp = tagMap.get(info.epcId);
-                    if (temp != null) {
-                        temp.ReadCnt += 1;
-                        tagMap.put(info.epcId, temp);
-                    }
-                }
-            }
-            rrTagList.clear();
-            return new ArrayList<>(tagMap.values());
-        }
     }
 
     //坤锐
