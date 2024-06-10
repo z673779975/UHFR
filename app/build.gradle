@@ -45,9 +45,9 @@ configurations {
 dependencies {
     implementation 'com.android.support:support-v4:28.0.0'
     implementation fileTree(include: ['*.aar'], dir: 'libs')
-    implementation files('libs\\ModuleAPI_J.jar')
     implementation files('libs\\jxl.jar')
     implementation 'me.weyye.hipermission:library:1.0.7'
+    implementation files('libs\\ModuleAPI_J.jar')
     customConfig fileTree(include: ['*.aar'], dir: 'libs')
     tempConfig fileTree(dest_dir)
 }
@@ -87,7 +87,7 @@ sync_aars.dependsOn(cleanJarDir)
 task aMakeJar(type: Jar) {
     println("makeJar")
     //指定生成的jar名
-    baseName 'UHF6_v1.9.8'
+    baseName 'UHF6_v1.9.9'
     //从哪里打包class文件
     from "build/intermediates/javac/debug/classes/"
     configurations.tempConfig.findAll {

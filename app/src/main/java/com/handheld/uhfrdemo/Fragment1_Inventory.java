@@ -322,7 +322,7 @@ public class Fragment1_Inventory extends Fragment implements OnCheckedChangeList
                 list1 = MainActivity.mUhfrManager.tagInventoryRealTime();
             } else {
                 if (isTid) {
-                    list1 = MainActivity.mUhfrManager.tagEpcOtherInventoryByTimer((short) 50, 2, 0, 12, Tools.HexString2Bytes("00000000"));
+                    list1 = MainActivity.mUhfrManager.tagEpcOtherLongFilterInventoryByTimer((short) 50, "48CC",1,2,3, 0, 106, Tools.HexString2Bytes("00000000"));
                 } else {
                     list1 = MainActivity.mUhfrManager.tagInventoryByTimer((short) 50);
                 }

@@ -530,6 +530,106 @@ public class UHFRManager {
         return list;
     }
 
+    public List<TAGINFO> tagEpcOtherLongInventoryByTimer(short readtime, int rbank, int startblock, int blockcount, @NonNull byte[] accesspwd) {
+
+        READER_ERR er;
+        List<TAGINFO> list = new ArrayList<>();
+
+        int[] tagcnt = new int[1];
+        er = reader.TagInventory_Raw(ants, 1, readtime, tagcnt);
+        logPrint("tagInventoryByTimer, TagInventory_Raw er: " + er.toString() + "; tagcnt[0]=" + tagcnt[0]);
+
+        if (er == READER_ERR.MT_OK_ERR) {
+            for (int i = 0; i < tagcnt[0]; i++) {
+                TAGINFO tfs = reader.new TAGINFO();
+                er = reader.GetNextTag(tfs);
+                if (er == READER_ERR.MT_OK_ERR) {
+//                    int rbank = 3, startblock = 0, blockcount = 106;
+                    byte[] rdata = new byte[blockcount * 2];
+                    byte[] rpaswd = null;
+                    er = reader.GetTagData(tfs.AntennaID, (char) rbank, startblock, blockcount, rdata, rpaswd, (short) 1000);
+
+                    if (er == READER_ERR.MT_OK_ERR) {
+                        String val = "";
+                        char[] out = null;
+                        out = new char[rdata.length * 2];
+                        reader.Hex2Str(rdata, rdata.length, out);
+                        val = String.valueOf(out).trim();
+                        tfs.EmbededDatalen = (short) (blockcount * 2);
+                        tfs.EmbededData = new byte[blockcount * 2];
+                        System.arraycopy(rdata, 0, tfs.EmbededData, 0, tfs.EmbededDatalen);
+                        list.add(tfs);
+                    } else {
+                        break;
+                    }
+                } else {
+                    //GetNextTag出现异常的时候跳出
+                    break;
+                }
+            }
+
+        } else {
+            mErr = er;
+            list = null;
+        }
+
+        return list;
+
+    }
+
+    public List<TAGINFO> tagEpcOtherLongFilterInventoryByTimer(short readtime, String fData,int fBank,int fAdd,int rbank, int startblock, int blockcount, @NonNull byte[] accesspwd) {
+
+        READER_ERR er;
+        List<TAGINFO> list = new ArrayList<>();
+
+        int[] tagcnt = new int[1];
+        er = reader.TagInventory_Raw(ants, 1, readtime, tagcnt);
+        logPrint("tagInventoryByTimer, TagInventory_Raw er: " + er.toString() + "; tagcnt[0]=" + tagcnt[0]);
+
+        if (er == READER_ERR.MT_OK_ERR) {
+            for (int i = 0; i < tagcnt[0]; i++) {
+                TAGINFO tfs = reader.new TAGINFO();
+                er = reader.GetNextTag(tfs);
+                if (er == READER_ERR.MT_OK_ERR) {
+                    byte[] rdata = new byte[blockcount * 2];
+                    byte[] rpaswd = null;
+                    TagFilter_ST g2tf = reader.new TagFilter_ST();
+                    g2tf.fdata = Tools.HexString2Bytes(fData);
+                    g2tf.flen = Tools.HexString2Bytes(fData).length * 8;
+                    g2tf.isInvert = 0;
+                    g2tf.bank = fBank;
+                    g2tf.startaddr = fAdd*16;
+                    reader.ParamSet(Mtr_Param.MTR_PARAM_TAG_FILTER, g2tf);
+                    er = reader.GetTagData(tfs.AntennaID, (char) rbank, startblock, blockcount, rdata, rpaswd, (short) 1000);
+
+                    if (er == READER_ERR.MT_OK_ERR) {
+                        String val = "";
+                        char[] out = null;
+                        out = new char[rdata.length * 2];
+                        reader.Hex2Str(rdata, rdata.length, out);
+                        val = String.valueOf(out).trim();
+                        tfs.EmbededDatalen = (short) (blockcount * 2);
+                        tfs.EmbededData = new byte[blockcount * 2];
+                        System.arraycopy(rdata, 0, tfs.EmbededData, 0, tfs.EmbededDatalen);
+                        list.add(tfs);
+                    } else {
+                        break;
+                    }
+                } else {
+                    //GetNextTag出现异常的时候跳出
+                    break;
+                }
+            }
+
+        } else {
+            mErr = er;
+            list = null;
+        }
+
+        return list;
+
+    }
+
     int Emboption = 0;//附加数据操作
     private boolean isEmb = false;//是否附加数据返回
 
@@ -824,7 +924,7 @@ public class UHFRManager {
 
     public READER_ERR setRegion(Region_Conf region) {
         READER_ERR readerErr = reader.ParamSet(Mtr_Param.MTR_PARAM_FREQUENCY_REGION, region);
-        if(readerErr!=READER_ERR.MT_OK_ERR){
+        if (readerErr != READER_ERR.MT_OK_ERR) {
             readerErr = setSpecParamsForReader(region);
         }
         return readerErr;
